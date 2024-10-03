@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S3 File Storage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+        button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>S3 File Storage</h1>
+
+    <h2>Загрузка файла</h2>
+    <input type="file" id="fileInput">
+    <button onclick="uploadFile()">Загрузить</button>
+
+    <h2>Скачивание файла</h2>
+    <input type="text" id="downloadFileName" placeholder="Имя файла">
+    <button onclick="downloadFile()">Скачать</button>
+
+    <h2>Удаление файла</h2>
+    <input type="text" id="deleteFileName" placeholder="Имя файла">
+    <button onclick="deleteFile()">Удалить</button>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000"; // URL вашего FastAPI-приложения
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Выберите файл для загрузки");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch(`${API_URL}/upload/`, {
+                    method: "POST",
+                    body: formData,
+                });
+
+                const result = await response.json();
+                alert(result.message);
+            } catch (error) {
+                alert("Ошибка при загрузке файла: " + error.message);
+            }
+        }
+
+        async function downloadFile() {
+            const filename = document.getElementById('downloadFileName').value;
+
+            if (!filename) {
+                alert("Введите имя файла для скачивания");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/download/${filename}`, {
+                    method: "GET",
+                });
+
+                if (!response.ok) {
+                    throw new Error("Ошибка при скачивании файла");
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.style.display = "none";
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                alert("Файл скачан");
+            } catch (error) {
+                alert("Ошибка: " + error.message);
+            }
+        }
+
+        async function deleteFile() {
+            const filename = document.getElementById('deleteFileName').value;
+
+            if (!filename) {
+                alert("Введите имя файла для удаления");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/delete/${filename}`, {
+                    method: "DELETE",
+                });
+
+                const result = await response.json();
+                alert(result.message);
+            } catch (error) {
+                alert("Ошибка при удалении файла: " + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
