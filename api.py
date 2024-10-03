@@ -1,6 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Request
 from fastapi.responses import HTMLResponse, FileResponse
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 
 import uvicorn
@@ -26,14 +25,9 @@ s3_client = boto3.client(
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Или укажите разрешенные домены
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
@@ -60,6 +54,5 @@ def delete_file(filename: str):
         return {"error": str(e)}
 
 
-
 if __name__ == "__main__":
-    uvicorn.run(app)
+    uvicorn.run(app, host='194.156.102.55')
